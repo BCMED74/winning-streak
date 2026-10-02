@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Winning Streak</title>
+<meta name="theme-color" content="#1A1B3A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F5FF; --surface:#FFFFFF; --ink:#1A1B3A; --muted:#5D5F85; --line:#DCDCF0;
+  --gold:#FFC233; --go:#14A86A; --alch:#6E4BF5; --danger:#C2364B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11122B; --surface:#1B1D3F; --ink:#F1F0FF; --muted:#A6A8D6; --line:#2E3166;
+    --gold:#FFC93F; --go:#2BD38C; --alch:#9D85FF; --danger:#FF6B81;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11122B; --surface:#1B1D3F; --ink:#F1F0FF; --muted:#A6A8D6; --line:#2E3166;
+  --gold:#FFC93F; --go:#2BD38C; --alch:#9D85FF; --danger:#FF6B81;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:17px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:16px 18px 40px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--alch);outline-offset:2px}
+
+/* Tabs */
+nav.tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:18px}
+nav.tabs button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:999px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+
+/* Scoreboard */
+.score{padding:6px 2px 18px}
+.score-top{display:flex;justify-content:space-between;align-items:baseline;color:var(--muted);font-size:15px}
+.streak{font-weight:600;color:var(--ink)}
+.big{display:flex;align-items:flex-end;gap:14px;margin-top:2px}
+.num{font-size:clamp(96px,30vw,150px);font-weight:800;line-height:.85;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.num-label{font-size:18px;font-weight:600;padding-bottom:12px;max-width:9ch;line-height:1.15}
+.tally{display:flex;flex-wrap:wrap;gap:14px 18px;margin-top:16px;min-height:30px}
+.group{position:relative;display:inline-flex;gap:5px;padding:0 2px}
+.bar{width:5px;height:30px;background:var(--ink);border-radius:3px}
+.bar.wake{background:var(--gold)}
+.bar.alch{background:var(--alch)}
+.slash{position:absolute;left:-5px;right:-5px;top:13px;height:5px;border-radius:3px;background:var(--go);transform:rotate(-24deg)}
+.tally-empty{color:var(--muted);font-size:15px}
+
+/* Wake */
+.wake-btn{width:100%;border:0;border-radius:18px;padding:18px;background:var(--gold);color:#1A1B3A;
+  font-weight:800;font-size:20px;text-align:left;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.wake-btn small{display:block;font-weight:400;font-size:14px}
+
+/* Add card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
+.mode{display:flex;gap:8px;margin-bottom:12px}
+.mode button{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:15px;font-weight:600;color:var(--muted)}
+.mode button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink)}
+.mode button.alch[aria-pressed="true"]{border-color:var(--alch);color:var(--alch)}
+label.f{display:block;font-size:14px;color:var(--muted);margin:8px 0 4px}
+input[type=text],input[type=time]{width:100%;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 13px;font-size:17px}
+input:focus{border-color:var(--ink);outline:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:0;background:var(--bg);border-radius:999px;padding:8px 13px;font-size:15px}
+.add{margin-top:12px;width:100%;border:0;border-radius:14px;padding:14px;background:var(--go);color:#fff;font-weight:800;font-size:18px}
+.add.alch{background:var(--alch)}
+.hint{font-size:14px;color:var(--muted);margin:10px 0 0}
+
+/* List */
+h2{font-size:22px;font-weight:800;margin:26px 0 10px;letter-spacing:-.01em}
+ol.wins{list-style:none;margin:0;padding:0}
+ol.wins li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.w-n{font-weight:800;font-size:20px;font-variant-numeric:tabular-nums}
+.w-n.wake{color:#B8860B}
+:root[data-theme="dark"] .w-n.wake{color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .w-n.wake{color:var(--gold)}}
+.w-n.alch{color:var(--alch)}
+.w-text{overflow-wrap:anywhere}
+.w-meta{font-size:13px;color:var(--muted)}
+.w-fail{font-size:14px;color:var(--muted);text-decoration:line-through}
+.w-act{display:flex;gap:6px}
+.icon{border:1px solid var(--line);background:transparent;border-radius:10px;min-width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink);font-size:16px;padding:0 8px}
+.icon.confirm{border-color:var(--danger);color:var(--danger);font-size:13px;font-weight:600}
+.empty{color:var(--muted);padding:6px 0}
+
+/* Evening */
+.evening .progress{display:flex;gap:4px;margin:10px 0 6px}
+.evening .seg{flex:1;height:10px;border-radius:3px;background:var(--line)}
+.evening .seg.on{background:var(--go)}
+.evening .seg.target{outline:2px solid var(--ink);outline-offset:-2px}
+.cta-link{display:block;text-align:center;margin-top:12px;border-radius:14px;padding:13px;background:var(--ink);color:var(--bg);font-weight:700;text-decoration:none}
+
+/* History */
+.day{border-bottom:1px solid var(--line);padding:12px 0}
+.day summary{display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;list-style:none;font-weight:600}
+.day summary::-webkit-details-marker{display:none}
+.day .cnt{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:400}
+.day ul{margin:8px 0 0;padding-left:20px;color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:30px;font-weight:800;line-height:1}
+.stat span{font-size:13px;color:var(--muted)}
+
+/* Rituals */
+.ritual{display:grid;grid-template-columns:1fr 112px;gap:10px;align-items:end;padding:14px 0;border-bottom:1px solid var(--line)}
+.ritual p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.ritual a{grid-column:1 / -1}
+.ritual .cta-link{margin-top:2px}
+
+/* Celebration */
+.boom{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);z-index:50;text-align:center;padding:24px}
+.boom.show{display:flex}
+.boom .word{font-size:clamp(64px,22vw,120px);font-weight:800;letter-spacing:-.04em;line-height:.9;color:var(--ink)}
+.boom .sub{margin-top:14px;font-size:18px;font-weight:600;max-width:24ch}
+.boom .cnt{margin-top:8px;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){
+  .boom.show .word{animation:pop .55s cubic-bezier(.2,1.6,.4,1)}
+}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+
+.backup{display:flex;gap:10px;margin-top:22px}
+.backup button{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;font-weight:600}
+.sync{font-size:12px;color:var(--muted);text-align:center;margin-top:28px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="today">Aujourd'hui</button>
+    <button role="tab" aria-selected="false" data-tab="history">Journal</button>
+    <button role="tab" aria-selected="false" data-tab="rituals">Rituels</button>
+  </nav>
+
+  <!-- AUJOURD'HUI -->
+  <section id="tab-today">
+    <div class="score">
+      <div class="score-top"><span id="dateLabel"></span><span class="streak" id="streakLabel"></span></div>
+      <div class="big"><div class="num" id="count">0</div><div class="num-label" id="countLabel">victoires aujourd'hui</div></div>
+      <div class="tally" id="tally" aria-hidden="true"></div>
+    </div>
+
+    <button class="wake-btn" id="wakeBtn" hidden>
+      <span>Je suis réveillé<small>En vie, un toit sur la tête. Et de une !</small></span><span aria-hidden="true">☀️</span>
+    </button>
+
+    <div class="card">
+      <div class="mode" role="group" aria-label="Type de victoire">
+        <button aria-pressed="true" data-mode="micro">Micro-win</button>
+        <button class="alch" aria-pressed="false" data-mode="alch">Retourner un raté</button>
+      </div>
+
+      <div id="microForm">
+        <label class="f" for="winInput">Qu'est-ce qui vient d'aller dans ton sens ?</label>
+        <input type="text" id="winInput" placeholder="Ex. le chef a validé ma proposition" autocomplete="off" enterkeyhint="done">
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div id="alchForm" hidden>
+        <label class="f" for="failInput">Ce qui a raté</label>
+        <input type="text" id="failInput" placeholder="Ex. train manqué" autocomplete="off">
+        <label class="f" for="hiddenInput">Le win caché : ce que ça t'évite, où ça te redirige</label>
+        <input type="text" id="hiddenInput" placeholder="Ex. 20 minutes pour appeler ma fille" autocomplete="off" enterkeyhint="done">
+      </div>
+
+      <button class="add" id="addBtn">Compter ce win</button>
+      <p class="hint" id="addHint">Dis-le à voix haute : « Je suis en plein Winning Streak, tout s'aligne pour moi. »</p>
+    </div>
+
+    <h2>Les wins du jour</h2>
+    <ol class="wins" id="todayList"></ol>
+
+    <div class="card evening" style="margin-top:22px">
+      <strong>Journal du soir</strong>
+      <div class="progress" id="progress"></div>
+      <div class="hint" id="eveningHint" style="margin-top:0"></div>
+      <a class="cta-link" id="journalCal" target="_blank" rel="noopener">Ajouter le journal du jour à mon agenda</a>
+    </div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section id="tab-history" hidden>
+    <div class="stats">
+      <div class="stat"><b id="stDays">0</b><span>jours de série</span></div>
+      <div class="stat"><b id="stBest">0</b><span>meilleure série</span></div>
+      <div class="stat"><b id="stTotal">0</b><span>wins au total</span></div>
+    </div>
+    <div id="historyList"></div>
+    <div class="backup">
+      <button type="button" id="exportBtn">Sauvegarder</button>
+      <button type="button" id="importBtn">Restaurer</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="hint">Tes wins sont gardés sur ce téléphone. Sauvegarde de temps en temps : le fichier te permet de tout récupérer sur un nouveau téléphone.</p>
+  </section>
+
+  <!-- RITUELS -->
+  <section id="tab-rituals" hidden>
+    <p class="hint" style="margin-top:0">Choisis tes heures, puis ajoute chaque rappel à Google Agenda. Il se répétera tous les jours.</p>
+    <div id="ritualList"></div>
+    <div class="card" style="margin-top:20px">
+      <strong>Ton geste d'ancrage</strong>
+      <p class="hint">À chaque win : un check dans le vide, un sourire, et « Boom ! » ou « Winning ! ». Le téléphone vibre quand tu comptes un win pour ancrer le geste dans le corps.</p>
+    </div>
+  </section>
+
+  <p class="sync" id="sync">Enregistré sur ce téléphone</p>
+</div>
+
+<div class="boom" id="boom" role="status" aria-live="polite">
+  <div class="word" id="boomWord">Boom !</div>
+  <div class="sub">Je suis en plein Winning Streak, tout s'aligne pour moi.</div>
+  <div class="cnt" id="boomCnt"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LS_KEY = "winning-streak:v1";
+  var TZ = (Intl.DateTimeFormat().resolvedOptions().timeZone) || "Europe/Zurich";
+  var CHIPS = ["Place de parking trouvée","Feu vert au croisement","Café particulièrement bon","Message sympa reçu","Bon repas","Moment avec ma fille"];
+  var RITUALS = [
+    {key:"wake",  title:"Winning Streak : Et de une !", desc:"Au réveil, compte ton premier win.", details:"Tu es en vie, tu as un toit : c'est un Win. Dis-le : « Et de une ! La série commence. »", def:"07:00", dur:5},
+    {key:"noon",  title:"Winning Streak : micro-wins", desc:"À midi, repère ce qui va dans ton sens.", details:"Parking, feu vert, café, message sympa… Compte-les. « Je suis en plein Winning Streak, tout s'aligne pour moi. »", def:"12:30", dur:5},
+    {key:"alch",  title:"Winning Streak : alchimie", desc:"L'après-midi, retourne un raté en win caché.", details:"Ce contretemps t'évite un problème plus grand ou te redirige vers mieux. Trouve le win caché.", def:"16:00", dur:5},
+    {key:"night", title:"Winning Streak : journal du soir", desc:"Avant de dormir, note 5 à 10 victoires.", details:"Passe la journée en revue sous l'angle du succès, juste avant le sommeil.", def:"22:00", dur:10}
+  ];
+
+  var state = {days:{}, settings:{}};
+  var mode = "micro";
+
+  function pad(n){ return (n<10?"0":"")+n; }
+  function dayKey(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function todayKey(){ return dayKey(new Date()); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function $(id){ return document.getElementById(id); }
+  function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function timeOf(iso){ var d=new Date(iso); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+  function getDay(k){ if(!state.days[k]) state.days[k]={date:k,wins:[]}; return state.days[k]; }
+  function setting(k){ var r=RITUALS.filter(function(x){return x.key===k;})[0]; return state.settings[k] || (r?r.def:"08:00"); }
+
+  /* ---------- Stockage ---------- */
+  function loadLocal(){
+    try{ var s=JSON.parse(localStorage.getItem(LS_KEY)); if(s&&s.days){ state.days=s.days; state.settings=s.settings||{}; } }catch(e){}
+  }
+  function saveLocal(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function persistDay(k){ saveLocal(); }
+  function persistSettings(){ saveLocal(); }
+  function mergeWins(a,b){
+    var seen={}, out=[];
+    (a||[]).concat(b||[]).forEach(function(w){ if(w&&w.id&&!seen[w.id]){ seen[w.id]=1; out.push(w); } });
+    out.sort(function(x,y){ return x.t<y.t?-1:x.t>y.t?1:0; });
+    return out;
+  }
+
+  /* ---------- Google Agenda ---------- */
+  function gcalStamp(d){ return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00"; }
+  function gcal(o){
+    var p=new URLSearchParams();
+    p.set("action","TEMPLATE"); p.set("text",o.title);
+    p.set("dates", gcalStamp(o.start)+"/"+gcalStamp(o.end));
+    p.set("details", o.details||""); p.set("ctz", TZ);
+    if(o.recur) p.set("recur","RRULE:"+o.recur);
+    return "https://calendar.google.com/calendar/render?"+p.toString();
+  }
+  function dateStamp(d){ return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()); }
+  function allDay(o){
+    var next=new Date(o.day.getFullYear(), o.day.getMonth(), o.day.getDate()+1);
+    var p=new URLSearchParams();
+    p.set("action","TEMPLATE"); p.set("text",o.title);
+    p.set("dates", dateStamp(o.day)+"/"+dateStamp(next));
+    p.set("details", o.details||"");
+    return "https://calendar.google.com/calendar/render?"+p.toString();
+  }
+  function winCalUrl(w){
+    var details = w.kind==="alch" ? "Raté : "+(w.fail||"")+"\nWin caché : "+w.text : w.text;
+    return allDay({title:"🏆 "+w.text, day:new Date(w.t), details:details+"\n\nWinning Streak"});
+  }
+  function ritualUrl(r){
+    var hm=setting(r.key).split(":"), s=new Date(); s.setHours(+hm[0], +hm[1], 0, 0);
+    if(s.getTime()<Date.now()) s.setDate(s.getDate()+1);
+    var e=new Date(s.getTime()+r.dur*60000);
+    return gcal({title:r.title, start:s, end:e, details:r.details, recur:"FREQ=DAILY"});
+  }
+  function journalUrl(k){
+    var wins=getDay(k).wins;
+    var lines=wins.map(function(w,i){ return (i+1)+". "+w.text+(w.kind==="alch"?" (après : "+(w.fail||"")+")":""); });
+    return allDay({title:"📓 Journal de victoires : "+wins.length+(wins.length>1?" wins":" win"), day:new Date(k+"T12:00:00"),
+      details:(lines.join("\n")||"Aucun win noté.")+"\n\nJe suis en plein Winning Streak, tout s'aligne pour moi."});
+  }
+
+  /* ---------- Actions ---------- */
+  function addWin(text, kind, fail){
+    text=(text||"").trim(); if(!text) return false;
+    var k=todayKey(), day=getDay(k);
+    var w={id:uid(), t:new Date().toISOString(), text:text, kind:kind};
+    if(fail) w.fail=fail.trim();
+    day.wins.push(w);
+    persistDay(k); render(); celebrate(day.wins.length);
+    return true;
+  }
+  function removeWin(k,id){
+    var day=getDay(k); day.wins=day.wins.filter(function(w){ return w.id!==id; });
+    persistDay(k); render();
+  }
+
+  var boomTimer=null;
+  function celebrate(n){
+    var word = n===1 ? "Et de une !" : (n%3===0 ? "Winning !" : (n%2===0 ? "Boom !" : "Et de "+n+" !"));
+    $("boomWord").textContent=word;
+    $("boomCnt").textContent = n+(n>1?" wins aujourd'hui":" win aujourd'hui");
+    var b=$("boom"); b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+    try{ if(navigator.vibrate) navigator.vibrate([25,40,70]); }catch(e){}
+    clearTimeout(boomTimer); boomTimer=setTimeout(function(){ b.classList.remove("show"); }, 1500);
+  }
+  $("boom").addEventListener("click", function(){ this.classList.remove("show"); });
+
+  /* ---------- Streaks ---------- */
+  function hasWins(k){ return state.days[k] && state.days[k].wins && state.days[k].wins.length>0; }
+  function currentStreak(){
+    var d=new Date(), n=0;
+    if(!hasWins(dayKey(d))) d.setDate(d.getDate()-1);
+    while(hasWins(dayKey(d))){ n++; d.setDate(d.getDate()-1); }
+    return n;
+  }
+  function bestStreak(){
+    var keys=Object.keys(state.days).filter(hasWins).sort(), best=0, run=0, prev=null;
+    keys.forEach(function(k){
+      var d=new Date(k+"T12:00:00");
+      if(prev){ var diff=Math.round((d-prev)/86400000); run = diff===1 ? run+1 : 1; } else run=1;
+      if(run>best) best=run; prev=d;
+    });
+    return best;
+  }
+
+  /* ---------- Rendu ---------- */
+  function render(){
+    var k=todayKey(), day=getDay(k), wins=day.wins, n=wins.length;
+    var now=new Date();
+    $("dateLabel").textContent = now.toLocaleDateString("fr-CH",{weekday:"long",day:"numeric",month:"long"});
+    var st=currentStreak();
+    $("streakLabel").textContent = st>0 ? "🔥 "+st+(st>1?" jours d'affilée":" jour") : "";
+    $("count").textContent=n;
+    $("countLabel").textContent = n===1 ? "victoire aujourd'hui" : "victoires aujourd'hui";
+
+    // Tally
+    var t=$("tally"); t.textContent="";
+    if(!n){ t.appendChild(el("span","tally-empty","La série commence au réveil.")); }
+    for(var g=0; g<n; g+=5){
+      var grp=el("span","group"), size=Math.min(5,n-g);
+      for(var i=0;i<Math.min(size,4);i++){
+        var w=wins[g+i]; grp.appendChild(el("span","bar"+(w.kind==="wake"?" wake":w.kind==="alch"?" alch":"")));
+      }
+      if(size===5) grp.appendChild(el("span","slash"));
+      t.appendChild(grp);
+    }
+
+    $("wakeBtn").hidden = wins.some(function(w){ return w.kind==="wake"; });
+
+    // Liste du jour
+    var list=$("todayList"); list.textContent="";
+    if(!n) list.appendChild(el("li","empty","Rien encore. Le premier win, c'est d'ouvrir les yeux."));
+    wins.forEach(function(w,i){
+      var li=el("li");
+      li.appendChild(el("span","w-n"+(w.kind==="wake"?" wake":w.kind==="alch"?" alch":""), String(i+1)));
+      var mid=el("div");
+      mid.appendChild(el("div","w-text",w.text));
+      if(w.kind==="alch" && w.fail) mid.appendChild(el("div","w-fail",w.fail));
+      mid.appendChild(el("div","w-meta", timeOf(w.t)+(w.kind==="alch"?" · win caché":w.kind==="wake"?" · réveil":"")));
+      li.appendChild(mid);
+      var act=el("div","w-act");
+      var cal=el("a","icon","📅"); cal.href=winCalUrl(w); cal.target="_blank"; cal.rel="noopener";
+      cal.setAttribute("aria-label","Ajouter ce win à mon agenda");
+      var del=el("button","icon","✕"); del.setAttribute("aria-label","Supprimer ce win");
+      (function(btn,id){
+        btn.addEventListener("click",function(){
+          if(btn.dataset.armed){ removeWin(k,id); return; }
+          btn.dataset.armed="1"; btn.textContent="Suppr. ?"; btn.classList.add("confirm");
+          setTimeout(function(){ if(btn.isConnected){ delete btn.dataset.armed; btn.textContent="✕"; btn.classList.remove("confirm"); } },2500);
+        });
+      })(del,w.id);
+      act.appendChild(cal); act.appendChild(del); li.appendChild(act);
+      list.appendChild(li);
+    });
+
+    // Journal du soir
+    var pr=$("progress"); pr.textContent="";
+    for(var s=1;s<=10;s++){ var seg=el("span","seg"+(s<=n?" on":"")+(s===5?" target":"")); pr.appendChild(seg); }
+    $("eveningHint").textContent = n<5 ? "Objectif : 5 à 10 victoires avant de dormir. Encore "+(5-n)+"."
+      : n<10 ? "Objectif atteint. Va jusqu'à 10 si tu en trouves d'autres." : "10 victoires. Journée relue sous l'angle du succès.";
+    $("journalCal").href=journalUrl(k);
+
+    renderHistory();
+    renderRituals();
+  }
+
+  function renderHistory(){
+    var keys=Object.keys(state.days).filter(hasWins).sort().reverse();
+    var total=0; keys.forEach(function(k){ total+=state.days[k].wins.length; });
+    $("stDays").textContent=currentStreak(); $("stBest").textContent=bestStreak(); $("stTotal").textContent=total;
+    var h=$("historyList"); h.textContent="";
+    if(!keys.length){ h.appendChild(el("p","empty","Ton journal se remplira dès ton premier win.")); return; }
+    keys.slice(0,120).forEach(function(k){
+      var d=new Date(k+"T12:00:00"), det=el("details","day"), sum=el("summary");
+      sum.appendChild(el("span",null,d.toLocaleDateString("fr-CH",{weekday:"long",day:"numeric",month:"long"})));
+      var c=state.days[k].wins.length; sum.appendChild(el("span","cnt",c+(c>1?" wins":" win")));
+      det.appendChild(sum);
+      var ul=el("ul");
+      state.days[k].wins.forEach(function(w){ ul.appendChild(el("li",null,w.text+(w.kind==="alch"&&w.fail?" (après : "+w.fail+")":""))); });
+      det.appendChild(ul);
+      h.appendChild(det);
+    });
+  }
+
+  var ritualsBuilt=false;
+  function renderRituals(){
+    var box=$("ritualList");
+    if(!ritualsBuilt){
+      box.textContent="";
+      RITUALS.forEach(function(r){
+        var row=el("div","ritual");
+        var txt=el("div"); txt.appendChild(el("strong",null,r.title.replace("Winning Streak : ",""))); txt.appendChild(el("p",null,r.desc));
+        var inp=document.createElement("input"); inp.type="time"; inp.id="t-"+r.key; inp.setAttribute("aria-label","Heure : "+r.desc);
+        inp.addEventListener("change",function(){ if(inp.value){ state.settings[r.key]=inp.value; persistSettings(); renderRituals(); } });
+        var a=el("a","cta-link","Ajouter à Google Agenda, tous les jours"); a.id="a-"+r.key; a.target="_blank"; a.rel="noopener";
+        row.appendChild(txt); row.appendChild(inp); row.appendChild(a); box.appendChild(row);
+      });
+      ritualsBuilt=true;
+    }
+    RITUALS.forEach(function(r){
+      var inp=$("t-"+r.key); if(document.activeElement!==inp) inp.value=setting(r.key);
+      $("a-"+r.key).href=ritualUrl(r);
+    });
+  }
+
+  /* ---------- Événements ---------- */
+  document.querySelectorAll("nav.tabs button").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll("nav.tabs button").forEach(function(x){ x.setAttribute("aria-selected", x===b?"true":"false"); });
+      ["today","history","rituals"].forEach(function(t){ $("tab-"+t).hidden = t!==b.dataset.tab; });
+      window.scrollTo(0,0);
+    });
+  });
+  document.querySelectorAll(".mode button").forEach(function(b){
+    b.addEventListener("click",function(){
+      mode=b.dataset.mode;
+      document.querySelectorAll(".mode button").forEach(function(x){ x.setAttribute("aria-pressed", x===b?"true":"false"); });
+      $("microForm").hidden = mode!=="micro"; $("alchForm").hidden = mode!=="alch";
+      $("addBtn").classList.toggle("alch", mode==="alch");
+      $("addBtn").textContent = mode==="alch" ? "Transformer en win" : "Compter ce win";
+      $("addHint").textContent = mode==="alch" ? "Ce contretemps t'évite un problème plus grand ou te redirige vers mieux."
+        : "Dis-le à voix haute : « Je suis en plein Winning Streak, tout s'aligne pour moi. »";
+    });
+  });
+  var chipBox=$("chips");
+  CHIPS.forEach(function(c){ var b=el("button","chip",c); b.type="button"; b.addEventListener("click",function(){ addWin(c,"micro"); }); chipBox.appendChild(b); });
+
+  function submit(){
+    if(mode==="micro"){
+      if(addWin($("winInput").value,"micro")) $("winInput").value="";
+      else $("winInput").focus();
+    } else {
+      var f=$("failInput").value, h=$("hiddenInput").value;
+      if(!h.trim()){ $("hiddenInput").focus(); return; }
+      if(addWin(h,"alch",f)){ $("failInput").value=""; $("hiddenInput").value=""; }
+    }
+  }
+  $("addBtn").addEventListener("click",submit);
+  $("winInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); submit(); } });
+  $("hiddenInput").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); submit(); } });
+  $("wakeBtn").addEventListener("click",function(){ addWin("Réveillé, en vie, un toit sur la tête","wake"); });
+
+  // Changement de jour pendant que l'app est ouverte
+  var lastKey=todayKey();
+  setInterval(function(){ if(todayKey()!==lastKey){ lastKey=todayKey(); render(); } }, 60000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden) render(); });
+
+  /* ---------- Sauvegarde ---------- */
+  $("exportBtn").addEventListener("click",function(){
+    var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="winning-streak-"+todayKey()+".json"; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
+  });
+  $("importBtn").addEventListener("click",function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change",function(){
+    var f=this.files&&this.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var data=JSON.parse(r.result); if(!data||!data.days) throw 0;
+        Object.keys(data.days).forEach(function(k){ var d=getDay(k); d.wins=mergeWins(d.wins,data.days[k].wins); });
+        state.settings=Object.assign({}, data.settings||{}, state.settings);
+        saveLocal(); render(); $("sync").textContent="Sauvegarde restaurée";
+      }catch(e){ $("sync").textContent="Ce fichier n'est pas une sauvegarde Winning Streak"; }
+    };
+    r.readAsText(f); this.value="";
+  });
+
+  loadLocal();
+  render();
+  if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+  if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(function(){}); }
+})();
+</script>
+</body>
+</html>
